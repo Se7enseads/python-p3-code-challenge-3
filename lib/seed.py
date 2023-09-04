@@ -38,14 +38,14 @@ if __name__ == '__main__':
 
         session.add(customer)
         customers.append(customer)
-    
+
     reviews = []
     for restaurant in restaurants:
-        for i in range(random.randint(1,5)):
+        for i in range(random.randint(1, 5)):
             review = Review(
-                star_rating=random.randint(1,10),
-                restaurant_id = random.randint(1,10),
-                customer_id = random.randint(1,10),
+                star_rating=random.randint(1, 10),
+                restaurant_id=random.randint(1, 10),
+                customer_id=random.randint(1, 10),
             )
 
             session.add(review)
