@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship, sessionmaker, declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
 
 engine = create_engine('sqlite:///restaurant.db')
@@ -8,9 +9,8 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 # Define the Restaurant class with SQLAlchemy ORM
-
-
 class Restaurant(Base):
     __tablename__ = 'restaurants'
 
@@ -39,20 +39,21 @@ class Restaurant(Base):
     def fanciest(cls):
         # Find the fanciest restaurant based on price
         all_restaurants = session.query(cls).all()
-        return f'The fanciest restaurant is {max(all_restaurants, key=lambda restaurant: restaurant.price)}.'
+
+        f_restaurant = session.query(Restaurant).order_by(
+            Restaurant.price.desc()).first()
+        return f'The fanciest restaurant is {f_restaurant.name}.'
 
     def all_reviews(self):
         # Retrieve all reviews for the restaurant and return them
-        reviews = [review.full_review()
-                   for review in self.reviews_relationship]
+        reviews = [review.full_review() for review in self.reviews_relationship]
         return reviews
 
     def __repr__(self):
         return f'<Restaurant:    id:{self.id}    name:{self.name}    price:{self.price}>\n'
 
+
 # Define the Customer class with SQLAlchemy ORM
-
-
 class Customer(Base):
     __tablename__ = 'customers'
 
@@ -84,19 +85,17 @@ class Customer(Base):
     def favorite_restaurant(self):
         reviews = [review for review in self.get_reviews()]
         if reviews:
-            # Find the review with the highest star rating and return the
-            # favorite restaurant
+            # Find the review with the highest star rating and return the favorite restaurant
             max_rating = max(reviews, key=lambda r: r.star_rating)
             return f"This is {self.full_name()}'s favorite restaurant: {max_rating.restaurant.name} id:{max_rating.restaurant.id}"
         else:
             return f"{self.full_name()} has no favorite restaurant"
 
     def add_review(self, restaurant, rating):
-        # Create a new review, add it to the session, and commit it to the
-        # database
+        # Create a new review, add it to the session, and commit it to the database
         new_review = Review(
             star_rating=rating,
-            restaurant_id=restaurant.id,
+            restaurant_id=restaurant,
             customer_id=self.id)
 
         session.add(new_review)
@@ -105,8 +104,7 @@ class Customer(Base):
         return new_review
 
     def delete_reviews(self, restaurant):
-        # Delete reviews associated with a specific restaurant for this
-        # customer
+        # Delete reviews associated with a specific restaurant for this  customer
         for review in self.reviews_relationship:
             if review.restaurant == restaurant:
                 session.delete(review)
@@ -115,9 +113,8 @@ class Customer(Base):
     def __repr__(self):
         return f'<Customer:    id:{self.id}    first_name:{self.first_name}    last_name:{self.last_name}>\n'
 
+
 # Define the Review class with SQLAlchemy ORM
-
-
 class Review(Base):
     __tablename__ = 'reviews'
 
@@ -128,8 +125,8 @@ class Review(Base):
     customer_id = Column(Integer, ForeignKey('customers.id'))
 
     # Define relationships with Restaurant and Customer
-    restaurant = relationship('Restaurant',
-                              back_populates='reviews_relationship')
+    restaurant = relationship(
+        'Restaurant', back_populates='reviews_relationship')
     customer = relationship('Customer', back_populates='reviews_relationship')
 
     def get_customer(self):

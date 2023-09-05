@@ -51,5 +51,5 @@ if __name__ == '__main__':
             session.add(review)
             reviews.append(review)
 
-    session.bulk_save_objects(restaurants, customers, reviews)
+    session.add_all([restaurant,customer,review])
     session.commit()
